@@ -7,7 +7,7 @@ import json
 from .collectors import CensusCollector, ONSCollector, SampleCollector
 from .generation import BaseGenerator, build_generator
 from .models import Event, ForecastCandidate, ForecastRun
-from .retrieval import ArchiveStore, default_archive_path
+from .retrieval import ArchiveStore, load_archive_store
 from .scoring import score_candidate, score_event, select_portfolio
 
 
@@ -19,12 +19,14 @@ class ForecastPipeline:
         outlet: str,
         live_collectors: list | None = None,
         fallback_collectors: list | None = None,
+        initial_warnings: list[str] | None = None,
     ) -> None:
         self.archive_store = archive_store
         self.generator = generator
         self.outlet = outlet
         self.live_collectors = live_collectors or [ONSCollector(), CensusCollector()]
         self.fallback_collectors = fallback_collectors or [SampleCollector()]
+        self.initial_warnings = initial_warnings or []
 
     def collect_events(self, target_date: date, offline: bool = False) -> tuple[list[Event], list[str]]:
         warnings: list[str] = []
@@ -49,6 +51,7 @@ class ForecastPipeline:
 
     def run(self, target_date: date, limit: int = 5, offline: bool = False) -> ForecastRun:
         events, warnings = self.collect_events(target_date=target_date, offline=offline)
+        warnings = [*self.initial_warnings, *warnings]
         best_per_event: list[ForecastCandidate] = []
 
         for event in events:
@@ -94,16 +97,18 @@ def build_pipeline(
     archive_dir: Path,
     web_search_enabled: bool = True,
 ) -> ForecastPipeline:
-    archive_path = archive_dir / f"{outlet.lower()}_sample.jsonl"
-    if not archive_path.exists():
-        archive_path = default_archive_path(outlet)
-    archive_store = ArchiveStore.from_jsonl(archive_path)
+    archive_store, archive_warnings = load_archive_store(outlet=outlet, archive_dir=archive_dir)
     generator = build_generator(
         provider=provider,
         model=model,
         web_search_enabled=web_search_enabled,
     )
-    return ForecastPipeline(archive_store=archive_store, generator=generator, outlet=outlet)
+    return ForecastPipeline(
+        archive_store=archive_store,
+        generator=generator,
+        outlet=outlet,
+        initial_warnings=archive_warnings,
+    )
 
 
 def write_run_artifacts(run: ForecastRun, out_dir: Path) -> None:
@@ -156,12 +161,12 @@ def render_markdown(run: ForecastRun) -> str:
                 f"- Headline: {candidate.draft.headline}",
                 f"- Lead: {candidate.draft.lead}",
                 f"- Angle: {candidate.scenario.angle}",
-                "",
-                "Style anchors:",
             ]
         )
-        for example in candidate.dossier.retrieved_examples[:3]:
-            lines.append(f"- {example.article.title}")
+        if candidate.dossier.retrieved_examples:
+            lines.extend(["", "Style anchors:"])
+            for example in candidate.dossier.retrieved_examples[:3]:
+                lines.append(f"- {example.article.title}")
         lines.append("")
 
     return "\n".join(lines).strip() + "\n"

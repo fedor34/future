@@ -37,6 +37,8 @@ OUTLET_DOMAIN_MAP = {
     "bloomberg": ["www.bloomberg.com", "bloomberg.com"],
     "wall street journal": ["www.wsj.com", "wsj.com"],
     "new york times": ["www.nytimes.com", "nytimes.com"],
+    "meduza": ["meduza.io", "www.meduza.io"],
+    "медуза": ["meduza.io", "www.meduza.io"],
 }
 
 
@@ -86,11 +88,12 @@ class MockGenerator(BaseGenerator):
     def generate_scenarios(self, dossier: EventDossier) -> list[FactScenario]:
         event = dossier.event
         lower = event.title.lower()
+        outlet = dossier.outlet
 
         if "trade" in lower:
             base = [
                 (
-                    "Reuters focuses on a narrower U.S. trade gap for February.",
+                    f"{outlet} focuses on a narrower U.S. trade gap for February.",
                     [
                         "The release lands on schedule at 8:30 AM ET.",
                         "Coverage centers on a smaller goods-and-services deficit versus the prior month.",
@@ -103,7 +106,7 @@ class MockGenerator(BaseGenerator):
                     0.78,
                 ),
                 (
-                    "Reuters stresses a still-wide deficit even if the monthly gap improves.",
+                    f"{outlet} stresses a still-wide deficit even if the monthly gap improves.",
                     [
                         "The headline keeps the focus on the deficit level rather than the month-on-month change.",
                         "The lead contrasts the new figure with the previous release.",
@@ -112,7 +115,7 @@ class MockGenerator(BaseGenerator):
                     0.67,
                 ),
                 (
-                    "Reuters emphasizes volatility in trade flows rather than a directional call.",
+                    f"{outlet} emphasizes volatility in trade flows rather than a directional call.",
                     [
                         "The story notes uneven import and export movements.",
                         "The lead uses cautious language around February trade conditions.",
@@ -124,7 +127,7 @@ class MockGenerator(BaseGenerator):
         elif "business insights" in lower:
             base = [
                 (
-                    "Reuters highlights softer UK hiring and persistent cost pressure in the ONS survey.",
+                    f"{outlet} highlights softer UK hiring and persistent cost pressure in the ONS survey.",
                     [
                         "The release is treated as a scheduled business survey rather than breaking news.",
                         "The main media angle is business caution heading into spring.",
@@ -137,7 +140,7 @@ class MockGenerator(BaseGenerator):
                     0.74,
                 ),
                 (
-                    "Reuters frames the ONS survey as showing firms remain resilient despite weak demand.",
+                    f"{outlet} frames the ONS survey as showing firms remain resilient despite weak demand.",
                     [
                         "The story leans on mixed signals instead of a one-sided deterioration call.",
                         "The lead balances weak demand against signs of operating resilience.",
@@ -146,7 +149,7 @@ class MockGenerator(BaseGenerator):
                     0.62,
                 ),
                 (
-                    "Reuters focuses on confidence staying subdued while costs keep firms cautious.",
+                    f"{outlet} focuses on confidence staying subdued while costs keep firms cautious.",
                     [
                         "The headline stays factual and compact.",
                         "The lead points to subdued sentiment in survey language.",
@@ -158,7 +161,7 @@ class MockGenerator(BaseGenerator):
         elif "economic activity" in lower:
             base = [
                 (
-                    "Reuters says UK real-time indicators point to modest activity with consumers still under pressure.",
+                    f"{outlet} says UK real-time indicators point to modest activity with consumers still under pressure.",
                     [
                         "The release is positioned as a pulse check on current activity.",
                         "The lead contrasts soft consumer conditions with steadier aggregate activity.",
@@ -170,7 +173,7 @@ class MockGenerator(BaseGenerator):
                     0.73,
                 ),
                 (
-                    "Reuters stresses mixed UK indicators as growth remains uneven.",
+                    f"{outlet} stresses mixed UK indicators as growth remains uneven.",
                     [
                         "The story emphasizes divergence across sectors and households.",
                         "The lead uses mixed-signals language rather than a hard directional call.",
@@ -179,7 +182,7 @@ class MockGenerator(BaseGenerator):
                     0.64,
                 ),
                 (
-                    "Reuters focuses on a fragile recovery signal in the latest UK indicators.",
+                    f"{outlet} focuses on a fragile recovery signal in the latest UK indicators.",
                     [
                         "The story frames the release as incremental evidence rather than a definitive turning point.",
                         "The lead stays conservative on momentum claims.",
@@ -395,6 +398,10 @@ class OpenAIGenerator(BaseGenerator):
         }
 
     def _allowed_domains(self, dossier: EventDossier) -> list[str]:
+        outlet_domains = OUTLET_DOMAIN_MAP.get(dossier.outlet.lower(), [])
+        if not outlet_domains:
+            return []
+
         domains: set[str] = set()
 
         source_host = urlparse(str(dossier.event.source.url)).netloc.lower()
@@ -405,7 +412,7 @@ class OpenAIGenerator(BaseGenerator):
             else:
                 domains.add(f"www.{source_host}")
 
-        for outlet_domain in OUTLET_DOMAIN_MAP.get(dossier.outlet.lower(), []):
+        for outlet_domain in outlet_domains:
             domains.add(outlet_domain.lower())
 
         return sorted(domain for domain in domains if domain)
