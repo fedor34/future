@@ -87,6 +87,15 @@ class ForecastCandidate(StrictModel):
     score: ScoreBreakdown
 
 
+class FilteredEventDecision(StrictModel):
+    event_id: str
+    title: str
+    source_name: str
+    editorial_fit: float = Field(ge=0.0, le=1.0)
+    threshold: float = Field(ge=0.0, le=1.0)
+    reasons: list[str] = Field(default_factory=list)
+
+
 class ForecastRun(StrictModel):
     target_date: date
     outlet: str
@@ -95,4 +104,5 @@ class ForecastRun(StrictModel):
     created_at: datetime
     collected_events: list[Event]
     candidates: list[ForecastCandidate]
+    filtered_events: list[FilteredEventDecision] = Field(default_factory=list)
     warnings: list[str] = Field(default_factory=list)

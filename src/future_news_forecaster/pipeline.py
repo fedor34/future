@@ -6,7 +6,7 @@ import json
 
 from .collectors import CensusCollector, ONSCollector, SampleCollector
 from .generation import BaseGenerator, build_generator
-from .models import Event, ForecastCandidate, ForecastRun
+from .models import Event, FilteredEventDecision, ForecastCandidate, ForecastRun
 from .retrieval import ArchiveStore, load_archive_store
 from .scoring import score_candidate, score_editorial_fit, score_event, select_portfolio
 
@@ -28,6 +28,14 @@ class ForecastPipeline:
         self.fallback_collectors = fallback_collectors or [SampleCollector()]
         self.initial_warnings = initial_warnings or []
 
+    @staticmethod
+    def _event_identity(event: Event) -> tuple[str, str, str]:
+        return (
+            event.title.strip().lower(),
+            event.date.isoformat(),
+            (event.time_label or "").strip(),
+        )
+
     def collect_events(self, target_date: date, offline: bool = False) -> tuple[list[Event], list[str]]:
         warnings: list[str] = []
         collectors = self.fallback_collectors if offline else self.live_collectors
@@ -45,15 +53,22 @@ class ForecastPipeline:
                 events.extend(collector.collect(target_date))
 
         deduped: dict[str, Event] = {}
+        identity_seen: set[tuple[str, str, str]] = set()
         for event in events:
+            identity = self._event_identity(event)
+            if identity in identity_seen:
+                continue
             deduped.setdefault(event.event_id, event)
+            identity_seen.add(identity)
         return list(deduped.values()), warnings
 
-    def run(self, target_date: date, limit: int = 5, offline: bool = False) -> ForecastRun:
-        events, warnings = self.collect_events(target_date=target_date, offline=offline)
-        warnings = [*self.initial_warnings, *warnings]
+    def _generate_candidates_for_events(
+        self,
+        events: list[Event],
+        warnings: list[str],
+        filtered_events: list[FilteredEventDecision],
+    ) -> list[ForecastCandidate]:
         best_per_event: list[ForecastCandidate] = []
-        filtered_out_events = 0
 
         for event in events:
             retrieved = self.archive_store.search(event, outlet=self.outlet, limit=5)
@@ -67,7 +82,16 @@ class ForecastPipeline:
             event.metadata["editorial_fit_threshold"] = editorial_threshold
 
             if editorial_fit < editorial_threshold:
-                filtered_out_events += 1
+                filtered_events.append(
+                    FilteredEventDecision(
+                        event_id=event.event_id,
+                        title=event.title,
+                        source_name=event.source.name,
+                        editorial_fit=editorial_fit,
+                        threshold=editorial_threshold,
+                        reasons=editorial_reasons,
+                    )
+                )
                 warnings.append(
                     f"Skipped '{event.title}' for outlet '{self.outlet}': "
                     f"editorial fit {editorial_fit:.3f} is below threshold {editorial_threshold:.3f}."
@@ -95,7 +119,56 @@ class ForecastPipeline:
             if candidates:
                 best_per_event.append(max(candidates, key=lambda item: item.score.total))
 
-        if filtered_out_events and not best_per_event:
+        return best_per_event
+
+    def _load_fallback_events(
+        self,
+        target_date: date,
+        known_ids: set[str],
+        known_identities: set[tuple[str, str, str]],
+    ) -> tuple[list[Event], list[str]]:
+        warnings: list[str] = []
+        recovered: list[Event] = []
+        for collector in self.fallback_collectors:
+            try:
+                for event in collector.collect(target_date):
+                    if event.event_id not in known_ids and self._event_identity(event) not in known_identities:
+                        recovered.append(event)
+            except Exception as exc:
+                warnings.append(f"{collector.name} failed during fallback recovery: {exc}")
+        return recovered, warnings
+
+    def run(self, target_date: date, limit: int = 5, offline: bool = False) -> ForecastRun:
+        events, warnings = self.collect_events(target_date=target_date, offline=offline)
+        warnings = [*self.initial_warnings, *warnings]
+        filtered_events: list[FilteredEventDecision] = []
+        best_per_event = self._generate_candidates_for_events(
+            events=events,
+            warnings=warnings,
+            filtered_events=filtered_events,
+        )
+
+        if not offline and not best_per_event:
+            recovered_events, recovery_warnings = self._load_fallback_events(
+                target_date=target_date,
+                known_ids={event.event_id for event in events},
+                known_identities={self._event_identity(event) for event in events},
+            )
+            warnings.extend(recovery_warnings)
+            if recovered_events:
+                warnings.append(
+                    "No live event cleared the outlet filter; trying bundled sample calendar to recover missing event types."
+                )
+                events.extend(recovered_events)
+                best_per_event.extend(
+                    self._generate_candidates_for_events(
+                        events=recovered_events,
+                        warnings=warnings,
+                        filtered_events=filtered_events,
+                    )
+                )
+
+        if filtered_events and not best_per_event:
             warnings.append(
                 f"No events cleared the editorial-fit filter for outlet '{self.outlet}' on {target_date.isoformat()}."
             )
@@ -109,6 +182,7 @@ class ForecastPipeline:
             created_at=datetime.now(UTC),
             collected_events=events,
             candidates=selected,
+            filtered_events=filtered_events,
             warnings=warnings,
         )
 
@@ -138,6 +212,7 @@ def write_run_artifacts(run: ForecastRun, out_dir: Path) -> None:
     out_dir.mkdir(parents=True, exist_ok=True)
     json_path = out_dir / "forecast_run.json"
     markdown_path = out_dir / "forecast_run.md"
+    filter_path = out_dir / "editorial_filter.md"
     events_path = out_dir / "collected_events.json"
 
     events_path.write_text(
@@ -149,6 +224,7 @@ def write_run_artifacts(run: ForecastRun, out_dir: Path) -> None:
         encoding="utf-8",
     )
     markdown_path.write_text(render_markdown(run), encoding="utf-8")
+    filter_path.write_text(render_editorial_report(run), encoding="utf-8")
 
 
 def render_markdown(run: ForecastRun) -> str:
@@ -169,6 +245,31 @@ def render_markdown(run: ForecastRun) -> str:
         for warning in run.warnings:
             lines.append(f"- {warning}")
         lines.append("")
+
+    if run.filtered_events:
+        lines.append("## Editorial filter")
+        lines.append("")
+        for item in run.filtered_events:
+            lines.append(
+                f"- {item.title}: fit {item.editorial_fit:.3f} below threshold {item.threshold:.3f}"
+            )
+        lines.append("")
+
+    if not run.candidates:
+        lines.extend(
+            [
+                "## Predictions",
+                "",
+                "No suitable forecast candidates were found for this outlet on the selected date.",
+                "",
+                "Try one of these:",
+                "- choose another date",
+                "- switch to offline mode if a live source failed",
+                "- use a broader outlet or add a local archive for this outlet",
+                "",
+            ]
+        )
+        return "\n".join(lines).strip() + "\n"
 
     lines.append("## Predictions")
     lines.append("")
@@ -195,6 +296,39 @@ def render_markdown(run: ForecastRun) -> str:
             lines.extend(["", "Style anchors:"])
             for example in candidate.dossier.retrieved_examples[:3]:
                 lines.append(f"- {example.article.title}")
+        lines.append("")
+
+    return "\n".join(lines).strip() + "\n"
+
+
+def render_editorial_report(run: ForecastRun) -> str:
+    lines = [
+        f"# Editorial filter for {run.outlet}",
+        "",
+        f"- Date: {run.target_date.isoformat()}",
+        f"- Filtered events: {len(run.filtered_events)}",
+        f"- Final candidates: {len(run.candidates)}",
+        "",
+    ]
+
+    if not run.filtered_events:
+        lines.append("No events were filtered out by the outlet-fit system.")
+        return "\n".join(lines).strip() + "\n"
+
+    for index, item in enumerate(run.filtered_events, start=1):
+        lines.extend(
+            [
+                f"## {index}. {item.title}",
+                "",
+                f"- Source: {item.source_name}",
+                f"- Editorial fit: {item.editorial_fit:.3f}",
+                f"- Threshold: {item.threshold:.3f}",
+            ]
+        )
+        if item.reasons:
+            lines.append("- Reasons:")
+            for reason in item.reasons:
+                lines.append(f"- {reason}")
         lines.append("")
 
     return "\n".join(lines).strip() + "\n"
