@@ -35,7 +35,9 @@ class OfflineSmokeTest(unittest.TestCase):
         )
         run = pipeline.run(target_date=date(2026, 4, 2), limit=3, offline=True)
         self.assertGreaterEqual(len(run.candidates), 1)
+        self.assertLess(len(run.candidates), len(run.collected_events))
         self.assertTrue(any("No local archive for outlet" in warning for warning in run.warnings))
+        self.assertTrue(any("Skipped" in warning for warning in run.warnings))
 
 
 if __name__ == "__main__":

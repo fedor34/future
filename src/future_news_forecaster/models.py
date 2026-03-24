@@ -71,6 +71,7 @@ class DraftPrediction(StrictModel):
 
 class ScoreBreakdown(StrictModel):
     event_likelihood: float = Field(ge=0.0, le=1.0)
+    editorial_fit: float = Field(ge=0.0, le=1.0)
     template_match: float = Field(ge=0.0, le=1.0)
     style_match: float = Field(ge=0.0, le=1.0)
     factuality_penalty: float = Field(ge=0.0, le=1.0)

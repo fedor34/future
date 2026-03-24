@@ -8,7 +8,7 @@ from .collectors import CensusCollector, ONSCollector, SampleCollector
 from .generation import BaseGenerator, build_generator
 from .models import Event, ForecastCandidate, ForecastRun
 from .retrieval import ArchiveStore, load_archive_store
-from .scoring import score_candidate, score_event, select_portfolio
+from .scoring import score_candidate, score_editorial_fit, score_event, select_portfolio
 
 
 class ForecastPipeline:
@@ -53,9 +53,27 @@ class ForecastPipeline:
         events, warnings = self.collect_events(target_date=target_date, offline=offline)
         warnings = [*self.initial_warnings, *warnings]
         best_per_event: list[ForecastCandidate] = []
+        filtered_out_events = 0
 
         for event in events:
             retrieved = self.archive_store.search(event, outlet=self.outlet, limit=5)
+            editorial_fit, editorial_reasons, editorial_threshold = score_editorial_fit(
+                event=event,
+                outlet=self.outlet,
+                retrieved_examples=retrieved,
+            )
+            event.metadata["editorial_fit_score"] = editorial_fit
+            event.metadata["editorial_fit_reasons"] = editorial_reasons
+            event.metadata["editorial_fit_threshold"] = editorial_threshold
+
+            if editorial_fit < editorial_threshold:
+                filtered_out_events += 1
+                warnings.append(
+                    f"Skipped '{event.title}' for outlet '{self.outlet}': "
+                    f"editorial fit {editorial_fit:.3f} is below threshold {editorial_threshold:.3f}."
+                )
+                continue
+
             event.predictability_score = score_event(event, len(retrieved))
             dossier = self.generator.build_dossier(event=event, outlet=self.outlet, retrieved_examples=retrieved)
             scenarios = self.generator.generate_scenarios(dossier)
@@ -76,6 +94,11 @@ class ForecastPipeline:
 
             if candidates:
                 best_per_event.append(max(candidates, key=lambda item: item.score.total))
+
+        if filtered_out_events and not best_per_event:
+            warnings.append(
+                f"No events cleared the editorial-fit filter for outlet '{self.outlet}' on {target_date.isoformat()}."
+            )
 
         selected = select_portfolio(best_per_event, limit=limit)
         return ForecastRun(
@@ -157,12 +180,17 @@ def render_markdown(run: ForecastRun) -> str:
                 f"- Source: {candidate.event.source.name}",
                 f"- Slot: {candidate.event.date.isoformat()} {candidate.event.time_label or 'TBD'} {candidate.event.timezone or ''}".strip(),
                 f"- Predictability score: {candidate.event.predictability_score:.3f}" if candidate.event.predictability_score is not None else "- Predictability score: n/a",
+                f"- Editorial fit: {candidate.score.editorial_fit:.3f}",
                 f"- Final score: {candidate.score.total:.3f}",
                 f"- Headline: {candidate.draft.headline}",
                 f"- Lead: {candidate.draft.lead}",
                 f"- Angle: {candidate.scenario.angle}",
             ]
         )
+        if candidate.score.reasons:
+            lines.append("- Coverage rationale:")
+            for reason in candidate.score.reasons[:3]:
+                lines.append(f"- {reason}")
         if candidate.dossier.retrieved_examples:
             lines.extend(["", "Style anchors:"])
             for example in candidate.dossier.retrieved_examples[:3]:
