@@ -58,6 +58,7 @@ class ForecastApp:
             value=f"Ключ хранится в {default_env_path()}. Вставьте его через Ctrl+V и сохраните."
         )
         self.provider_hint_var = tk.StringVar()
+        self.outlet_hint_var = tk.StringVar()
 
         self.key_entry: ttk.Entry | None = None
         self.run_button: ttk.Button | None = None
@@ -78,6 +79,8 @@ class ForecastApp:
         self._configure_styles()
         self._build_layout()
         self._sync_provider_hint()
+        self.outlet_var.trace_add("write", self._sync_outlet_hint)
+        self._sync_outlet_hint()
         self.root.bind("<Control-Return>", lambda _e: self._start_run())
         self.root.bind("<Control-KP_Enter>", lambda _e: self._start_run())
         self.root.after(150, self._poll_queue)
@@ -164,6 +167,15 @@ class ForecastApp:
         self._field(left, "Дата"); ttk.Entry(left, textvariable=self.date_var).pack(fill="x")
         self._field(right, "Количество прогнозов"); ttk.Spinbox(right, from_=1, to=10, textvariable=self.limit_var).pack(fill="x")
         self._field(settings_inner, "Издание"); ttk.Entry(settings_inner, textvariable=self.outlet_var).pack(fill="x")
+        tk.Label(
+            settings_inner,
+            textvariable=self.outlet_hint_var,
+            bg=self.colors["panel"],
+            fg=self.colors["muted"],
+            font=("Segoe UI", 9),
+            wraplength=300,
+            justify="left",
+        ).pack(anchor="w", pady=(8, 0))
         self._field(settings_inner, "Папка результатов"); ttk.Entry(settings_inner, textvariable=self.out_dir_var).pack(fill="x")
         ttk.Checkbutton(settings_inner, text="Offline режим без live-коллекторов", variable=self.offline_var).pack(anchor="w", pady=(12, 0))
 
@@ -280,6 +292,25 @@ class ForecastApp:
             "mock": "Полностью локальный режим для проверки pipeline.",
         }
         self.provider_hint_var.set(hints.get(self.provider_var.get().strip(), ""))
+
+    def _sync_outlet_hint(self, *_args) -> None:
+        outlet = self.outlet_var.get().strip().lower()
+        if outlet in {"reuters", "bloomberg", "financial times", "ft", "associated press", "ap"}:
+            text = (
+                "Лучше всего текущая версия работает для деловых агентств и экономических редакций. "
+                "Подключенные календари хорошо подходят для такого типа СМИ."
+            )
+        elif outlet in {"медуза", "meduza"}:
+            text = (
+                "Для selective-изданий вроде Медузы рутинные UK/US релизы часто будут отсеяны. "
+                "На некоторых датах мало тем или 0 кандидатов — это нормальный результат."
+            )
+        else:
+            text = (
+                "Сейчас продукт лучше всего подходит для деловых и экономических СМИ, например Reuters, Bloomberg или FT. "
+                "Для general news, локальных, lifestyle и части политических редакций тем может не быть."
+            )
+        self.outlet_hint_var.set(text)
 
     def _start_run(self) -> None:
         if self.worker and self.worker.is_alive():
