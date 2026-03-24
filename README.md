@@ -94,6 +94,7 @@ Each run writes:
 - `collected_events.json`
 - `forecast_run.json`
 - `forecast_run.md`
+- `editorial_filter.md`
 
 ## Project layout
 
@@ -117,3 +118,17 @@ docs/project-concept/
 - The bundled archive is synthetic and exists only to provide a stable style-retrieval baseline.
 - The live collectors are intentionally lightweight and HTML-structure-dependent; for production use, move them behind richer parsers and fixture-backed tests.
 - If OpenAI is unavailable or `OPENAI_API_KEY` is missing, `provider=auto` falls back to the deterministic `mock` generator.
+
+## Current limitations
+
+- The current live event universe is narrow by design: it is built mainly from ONS and U.S. Census release calendars, so the strongest coverage today is UK/US macro, statistics, and scheduled releases.
+- Web search improves context and phrasing, but it does not replace the upstream event universe. The system still starts from connected calendars or bundled fallback events.
+- Not every outlet writes about these calendars. The project now applies an outlet-level editorial-fit filter before generation, and returning zero candidates is a valid result.
+- Outlet emulation is stronger when a matching local archive exists. Without `data/archives/<outlet>_sample.jsonl`, style matching is weaker even if the event passes the filter.
+- The current setup is not a good fit for breaking news, local city coverage, lifestyle, culture, or sports-heavy publications.
+
+## Example fits with the current event universe
+
+- Reuters / Bloomberg / Financial Times: a strong fit for scheduled macro releases such as `U.S. International Trade in Goods and Services`.
+- Reuters: also a strong fit for ONS survey-style releases such as `Economic activity and social change in the UK` or `Business insights and impact on the UK economy`.
+- Meduza: should usually reject routine UK statistical releases unless the event has broader geopolitical or economic relevance. In the current connected sources, U.S. trade is a more realistic fit than routine ONS statistics.
