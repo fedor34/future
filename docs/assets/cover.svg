@@ -1,0 +1,65 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="630" rx="28" fill="#F3EFE8"/>
+  <rect x="34" y="34" width="1132" height="562" rx="26" fill="#FBF8F2" stroke="#D6CEC2" stroke-width="2"/>
+
+  <rect x="72" y="74" width="1056" height="98" rx="18" fill="#FFFDFC" stroke="#D6CEC2" stroke-width="2"/>
+  <text x="104" y="122" fill="#1F2933" font-family="Segoe UI, Arial, sans-serif" font-size="34" font-weight="700">Future News Forecaster</text>
+  <text x="104" y="154" fill="#6B7280" font-family="Segoe UI, Arial, sans-serif" font-size="18">
+    Forecasting how a concrete outlet might cover a scheduled event.
+  </text>
+
+  <rect x="895" y="92" width="195" height="60" rx="16" fill="#D7EFE8"/>
+  <text x="918" y="118" fill="#115E59" font-family="Segoe UI, Arial, sans-serif" font-size="16" font-weight="700">Pet project</text>
+  <text x="918" y="141" fill="#1F2933" font-family="Segoe UI, Arial, sans-serif" font-size="14">OpenAI + mock + GUI</text>
+
+  <rect x="72" y="208" width="332" height="326" rx="20" fill="#FFFDFC" stroke="#D6CEC2" stroke-width="2"/>
+  <text x="100" y="250" fill="#1F2933" font-family="Segoe UI, Arial, sans-serif" font-size="24" font-weight="700">Controls</text>
+  <text x="100" y="290" fill="#6B7280" font-family="Segoe UI, Arial, sans-serif" font-size="16">provider</text>
+  <rect x="100" y="302" width="276" height="38" rx="10" fill="#F3EFE8" stroke="#D6CEC2"/>
+  <text x="116" y="326" fill="#1F2933" font-family="Consolas, monospace" font-size="16">openai + web</text>
+
+  <text x="100" y="370" fill="#6B7280" font-family="Segoe UI, Arial, sans-serif" font-size="16">outlet</text>
+  <rect x="100" y="382" width="276" height="38" rx="10" fill="#F3EFE8" stroke="#D6CEC2"/>
+  <text x="116" y="406" fill="#1F2933" font-family="Consolas, monospace" font-size="16">Reuters / Meduza / FT</text>
+
+  <text x="100" y="450" fill="#6B7280" font-family="Segoe UI, Arial, sans-serif" font-size="16">date</text>
+  <rect x="100" y="462" width="160" height="38" rx="10" fill="#F3EFE8" stroke="#D6CEC2"/>
+  <text x="116" y="486" fill="#1F2933" font-family="Consolas, monospace" font-size="16">2026-04-02</text>
+
+  <rect x="100" y="520" width="190" height="46" rx="14" fill="#0F766E"/>
+  <text x="135" y="549" fill="#FFFFFF" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="700">Run forecast</text>
+
+  <rect x="432" y="208" width="658" height="326" rx="20" fill="#FFFDFC" stroke="#D6CEC2" stroke-width="2"/>
+  <rect x="462" y="236" width="110" height="42" rx="12" fill="#DCFCE7"/>
+  <text x="487" y="262" fill="#166534" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="700">READY</text>
+  <text x="602" y="262" fill="#1F2933" font-family="Segoe UI, Arial, sans-serif" font-size="18">
+    collect -&gt; fit -&gt; retrieve -&gt; draft -&gt; rerank
+  </text>
+
+  <text x="462" y="326" fill="#1F2933" font-family="Segoe UI, Arial, sans-serif" font-size="24" font-weight="700">Predictions</text>
+  <text x="462" y="366" fill="#1F2933" font-family="Segoe UI, Arial, sans-serif" font-size="20" font-weight="700">
+    U.S. trade gap likely narrows in February as imports cool
+  </text>
+  <text x="462" y="399" fill="#6B7280" font-family="Segoe UI, Arial, sans-serif" font-size="17">
+    Forecast built from a scheduled release, outlet fit, and style anchors.
+  </text>
+
+  <rect x="462" y="435" width="275" height="64" rx="16" fill="#F3EFE8" stroke="#D6CEC2"/>
+  <text x="484" y="462" fill="#115E59" font-family="Segoe UI, Arial, sans-serif" font-size="16" font-weight="700">Editorial fit</text>
+  <text x="484" y="486" fill="#1F2933" font-family="Segoe UI, Arial, sans-serif" font-size="14">
+    Rejects topics that the outlet would likely ignore.
+  </text>
+
+  <rect x="763" y="435" width="297" height="64" rx="16" fill="#F3EFE8" stroke="#D6CEC2"/>
+  <text x="785" y="462" fill="#115E59" font-family="Segoe UI, Arial, sans-serif" font-size="16" font-weight="700">Artifacts</text>
+  <text x="785" y="486" fill="#1F2933" font-family="Segoe UI, Arial, sans-serif" font-size="14">
+    JSON, Markdown, filter report, and in-app preview.
+  </text>
+
+  <rect x="72" y="558" width="114" height="26" rx="13" fill="#D7EFE8"/>
+  <text x="96" y="576" fill="#115E59" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="700">calendar-first</text>
+  <rect x="196" y="558" width="106" height="26" rx="13" fill="#F6D8CF"/>
+  <text x="223" y="576" fill="#8C3C2A" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="700">outlet-fit</text>
+  <rect x="312" y="558" width="116" height="26" rx="13" fill="#E4E9FF"/>
+  <text x="339" y="576" fill="#3047A0" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="700">structured AI</text>
+</svg>

@@ -1,93 +1,146 @@
 # Future News Forecaster
 
-`future-news-forecaster` is a small MVP that implements the pipeline described in the shared conversation:
+<p align="center">
+  <img src="docs/assets/cover.svg" alt="Future News Forecaster cover" width="100%">
+</p>
 
-`collect -> score -> select -> retrieve -> draft -> rerank -> export`
+<p align="center">
+  <strong>Pet project</strong> about forecasting how a concrete newsroom might cover a scheduled event.
+</p>
 
-The core idea is the same as in the link: do not "guess the future in general", but select **scheduled, high-certainty events** and forecast how a concrete outlet will turn them into a headline and a lead.
+<p align="center">
+  <img src="https://img.shields.io/badge/python-3.10+-0F766E?style=flat-square" alt="Python 3.10+">
+  <img src="https://img.shields.io/badge/gui-Tkinter-D7EFE8?style=flat-square" alt="Tkinter GUI">
+  <img src="https://img.shields.io/badge/openai-Responses%20API-115E59?style=flat-square" alt="OpenAI Responses API">
+  <img src="https://img.shields.io/badge/status-pet%20project-C97B63?style=flat-square" alt="Pet project">
+</p>
 
-## What is implemented
+Future News Forecaster does not try to "predict the future" in a general sense.  
+It starts from **scheduled, high-certainty events** and builds a conservative forecast of how a chosen outlet could turn that event into a **headline + lead**.
 
-- Live collectors for:
-  - [ONS release calendar](https://www.ons.gov.uk/releasecalendar?page=4&release-type=type-upcoming)
-  - [U.S. Census economic indicators calendar](https://www.census.gov/economic-indicators/calendar-listview.html)
-- Offline fallback collector with bundled sample events for `2026-04-02`
-- Retrieval over a small local archive (`data/archives/reuters_sample.jsonl`)
-- Predictability scoring for scheduled slots
-- Two-stage generation API:
-  - stage A: structured scenarios
-  - stage B: headline + lead
-- `mock` generator for deterministic local runs
-- Optional OpenAI generator using Structured Outputs via the current `responses.parse(...)` flow from the official docs:
-  - [Structured Outputs guide](https://developers.openai.com/api/docs/guides/structured-outputs/)
-- Optional OpenAI web search integration via the official Responses API `web_search` tool
-- Artifact export to JSON and Markdown
-- Desktop GUI that shows forecasts directly in the app
-- Separate concept folder: `docs/project-concept/`
+The current product is strongest on **calendar-driven macro and statistics coverage** and is intentionally honest about where it does not fit.
 
-## Install
+## Why This Exists
+
+This repository is a small newsroom-flavored experiment around three ideas:
+
+- a news forecast should start from a real upcoming event, not from free-form guessing
+- outlet fit matters as much as writing style
+- a good system should be allowed to say "this outlet probably would not cover this"
+
+That is why the project has an explicit `editorial fit` layer before generation and can return zero candidates as a valid outcome.
+
+## What It Does
+
+- collects upcoming events from connected release calendars
+- scores event predictability and outlet relevance
+- retrieves style anchors from a local archive when available
+- generates restrained scenarios first, then writes headline + lead
+- reranks results and exports them to JSON/Markdown
+- shows the forecast, warnings, and filtering logic directly in a desktop GUI
+
+## Workflow
+
+<p align="center">
+  <img src="docs/assets/workflow.svg" alt="Workflow diagram" width="100%">
+</p>
+
+## Current Event Universe
+
+Right now the live inputs are intentionally narrow:
+
+- [ONS release calendar](https://www.ons.gov.uk/releasecalendar?page=4&release-type=type-upcoming)
+- [U.S. Census economic indicators calendar](https://www.census.gov/economic-indicators/calendar-listview.html)
+- a bundled sample fallback collector for stable offline demos
+
+This means the project currently works best on:
+
+- Reuters / Bloomberg / Financial Times style use cases
+- macro releases, trade, surveys, official statistics
+- scheduled, explainable, high-certainty newsroom events
+
+## Honest Limitations
+
+This repo is not trying to fake universality. Current limitations are part of the product definition:
+
+- the live event universe is mostly UK/US macro and statistical releases
+- web search improves context, but it does not replace the upstream event universe
+- not every outlet writes about these calendars, so some runs should end with zero candidates
+- outlet style matching is much stronger when a local archive like `data/archives/<outlet>_sample.jsonl` exists
+- breaking news, local city coverage, lifestyle, culture, and sports-heavy newsrooms are weak fits today
+
+For selective outlets such as Meduza, routine UK releases are often filtered out. That is expected behavior, not a bug.
+
+## Example Fits
+
+Examples the current product can realistically support:
+
+- Reuters / Bloomberg / Financial Times: `U.S. International Trade in Goods and Services`
+- Reuters: `Economic activity and social change in the UK, real-time indicators`
+- Reuters: `Business insights and impact on the UK economy`
+- Meduza: broader economic or geopolitical angles are more realistic than routine ONS statistics
+
+## Desktop App
+
+The repo includes a Tkinter desktop app with:
+
+- API key entry and `.env` saving
+- provider / date / outlet / limit controls
+- in-app forecast view
+- an `Editorial filter` tab explaining why topics were rejected
+- a project-idea tab with concept notes and product limitations
+
+## Quick Start
+
+Install:
 
 ```bash
 python -m pip install -e .
 ```
 
-## Where to put the OpenAI key
-
-Two options are supported:
-
-1. In the GUI:
-   - run `python -m future_news_forecaster gui`
-   - paste the key into the `API key` field
-   - click `Сохранить ключ`
-2. Manually in the project root, in `.env`:
-
-```bash
-OPENAI_API_KEY=your_key_here
-```
-
-The GUI saves the key to `.env` automatically.
-
-## Quick start
-
-Offline run:
-
-```bash
-python -m future_news_forecaster run --date 2026-04-02 --offline --provider mock --out-dir results/offline-demo
-```
-
-Live collectors + auto provider:
-
-```bash
-python -m future_news_forecaster run --date 2026-04-02 --provider auto --out-dir results/live-run
-```
-
-Disable OpenAI web search if needed:
-
-```bash
-python -m future_news_forecaster run --date 2026-04-02 --provider openai --no-web-search
-```
-
-GUI:
+Run the GUI:
 
 ```bash
 python -m future_news_forecaster gui
 ```
 
-The GUI now shows:
+Offline demo:
 
-- status and log
-- generated forecasts directly in the app
-- a built-in tab with the project idea and its operating principles
-- a checkbox for OpenAI web search
+```bash
+python -m future_news_forecaster run --date 2026-04-02 --offline --provider mock --out-dir results/offline-demo
+```
 
-Force OpenAI provider:
+Live run with auto provider:
+
+```bash
+python -m future_news_forecaster run --date 2026-04-02 --provider auto --out-dir results/live-run
+```
+
+Force OpenAI:
 
 ```bash
 set OPENAI_API_KEY=your_key_here
 python -m future_news_forecaster run --date 2026-04-02 --provider openai --model gpt-5-mini
 ```
 
-## Output
+Disable OpenAI web search:
+
+```bash
+python -m future_news_forecaster run --date 2026-04-02 --provider openai --no-web-search
+```
+
+## OpenAI Key
+
+Two ways to provide the key:
+
+1. via the GUI field and `Save key`
+2. manually in the project root `.env`
+
+```bash
+OPENAI_API_KEY=your_key_here
+```
+
+## Output Artifacts
 
 Each run writes:
 
@@ -96,39 +149,44 @@ Each run writes:
 - `forecast_run.md`
 - `editorial_filter.md`
 
-## Project layout
+## Project Layout
 
 ```text
 src/future_news_forecaster/
-  collectors/         # calendar collectors
-  generation.py       # mock + OpenAI scenario/story generation
-  retrieval.py        # lightweight archive retrieval
-  scoring.py          # slot and candidate scoring
-  pipeline.py         # end-to-end orchestration
-  cli.py              # command line entrypoint
+  collectors/         calendar collectors
+  generation.py       mock + OpenAI generation
+  retrieval.py        archive retrieval
+  scoring.py          predictability + editorial fit scoring
+  pipeline.py         end-to-end orchestration
+  gui.py              desktop app
+  cli.py              CLI entrypoint
 data/archives/
   reuters_sample.jsonl
 docs/project-concept/
   README.md
   principles.md
+docs/assets/
+  cover.svg
+  workflow.svg
 ```
 
-## Notes
+## Tech Notes
 
-- The bundled archive is synthetic and exists only to provide a stable style-retrieval baseline.
-- The live collectors are intentionally lightweight and HTML-structure-dependent; for production use, move them behind richer parsers and fixture-backed tests.
-- If OpenAI is unavailable or `OPENAI_API_KEY` is missing, `provider=auto` falls back to the deterministic `mock` generator.
+- `mock` mode gives deterministic local runs for demos and tests
+- OpenAI mode uses Structured Outputs through the Responses API
+- optional OpenAI web search is used to verify phrasing and event context
+- `provider=auto` falls back to `mock` if OpenAI is unavailable
 
-## Current limitations
+## Roadmap
 
-- The current live event universe is narrow by design: it is built mainly from ONS and U.S. Census release calendars, so the strongest coverage today is UK/US macro, statistics, and scheduled releases.
-- Web search improves context and phrasing, but it does not replace the upstream event universe. The system still starts from connected calendars or bundled fallback events.
-- Not every outlet writes about these calendars. The project now applies an outlet-level editorial-fit filter before generation, and returning zero candidates is a valid result.
-- Outlet emulation is stronger when a matching local archive exists. Without `data/archives/<outlet>_sample.jsonl`, style matching is weaker even if the event passes the filter.
-- The current setup is not a good fit for breaking news, local city coverage, lifestyle, culture, or sports-heavy publications.
+- add more event calendars beyond ONS and Census
+- expand outlet-specific local archives
+- improve outlet coverage modeling, not just outlet style
+- add richer retrieval over larger article sets
+- make the GUI more newsroom-like and demo-friendly
 
-## Example fits with the current event universe
+## Related Docs
 
-- Reuters / Bloomberg / Financial Times: a strong fit for scheduled macro releases such as `U.S. International Trade in Goods and Services`.
-- Reuters: also a strong fit for ONS survey-style releases such as `Economic activity and social change in the UK` or `Business insights and impact on the UK economy`.
-- Meduza: should usually reject routine UK statistical releases unless the event has broader geopolitical or economic relevance. In the current connected sources, U.S. trade is a more realistic fit than routine ONS statistics.
+- concept notes: [`docs/project-concept/README.md`](docs/project-concept/README.md)
+- operating principles: [`docs/project-concept/principles.md`](docs/project-concept/principles.md)
+

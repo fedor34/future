@@ -1,0 +1,52 @@
+<svg width="1200" height="260" viewBox="0 0 1200 260" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="260" rx="24" fill="#F3EFE8"/>
+  <rect x="20" y="20" width="1160" height="220" rx="22" fill="#FBF8F2" stroke="#D6CEC2" stroke-width="2"/>
+
+  <rect x="48" y="74" width="150" height="110" rx="18" fill="#FFFDFC" stroke="#D6CEC2"/>
+  <text x="76" y="112" fill="#115E59" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="700">1. Collect</text>
+  <text x="76" y="140" fill="#1F2933" font-family="Segoe UI, Arial, sans-serif" font-size="14">ONS</text>
+  <text x="76" y="160" fill="#1F2933" font-family="Segoe UI, Arial, sans-serif" font-size="14">U.S. Census</text>
+  <text x="76" y="180" fill="#1F2933" font-family="Segoe UI, Arial, sans-serif" font-size="14">Sample fallback</text>
+
+  <rect x="232" y="74" width="150" height="110" rx="18" fill="#FFFDFC" stroke="#D6CEC2"/>
+  <text x="260" y="112" fill="#115E59" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="700">2. Fit</text>
+  <text x="260" y="140" fill="#1F2933" font-family="Segoe UI, Arial, sans-serif" font-size="14">predictability</text>
+  <text x="260" y="160" fill="#1F2933" font-family="Segoe UI, Arial, sans-serif" font-size="14">editorial fit</text>
+  <text x="260" y="180" fill="#1F2933" font-family="Segoe UI, Arial, sans-serif" font-size="14">candidate filter</text>
+
+  <rect x="416" y="74" width="150" height="110" rx="18" fill="#FFFDFC" stroke="#D6CEC2"/>
+  <text x="438" y="112" fill="#115E59" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="700">3. Retrieve</text>
+  <text x="438" y="140" fill="#1F2933" font-family="Segoe UI, Arial, sans-serif" font-size="14">local archive</text>
+  <text x="438" y="160" fill="#1F2933" font-family="Segoe UI, Arial, sans-serif" font-size="14">style anchors</text>
+  <text x="438" y="180" fill="#1F2933" font-family="Segoe UI, Arial, sans-serif" font-size="14">outlet clues</text>
+
+  <rect x="600" y="74" width="150" height="110" rx="18" fill="#FFFDFC" stroke="#D6CEC2"/>
+  <text x="626" y="112" fill="#115E59" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="700">4. Scenario</text>
+  <text x="626" y="140" fill="#1F2933" font-family="Segoe UI, Arial, sans-serif" font-size="14">conservative facts</text>
+  <text x="626" y="160" fill="#1F2933" font-family="Segoe UI, Arial, sans-serif" font-size="14">uncertainties</text>
+  <text x="626" y="180" fill="#1F2933" font-family="Segoe UI, Arial, sans-serif" font-size="14">confidence score</text>
+
+  <rect x="784" y="74" width="150" height="110" rx="18" fill="#FFFDFC" stroke="#D6CEC2"/>
+  <text x="810" y="112" fill="#115E59" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="700">5. Draft</text>
+  <text x="810" y="140" fill="#1F2933" font-family="Segoe UI, Arial, sans-serif" font-size="14">headline</text>
+  <text x="810" y="160" fill="#1F2933" font-family="Segoe UI, Arial, sans-serif" font-size="14">lead</text>
+  <text x="810" y="180" fill="#1F2933" font-family="Segoe UI, Arial, sans-serif" font-size="14">mock or OpenAI</text>
+
+  <rect x="968" y="74" width="184" height="110" rx="18" fill="#FFFDFC" stroke="#D6CEC2"/>
+  <text x="992" y="112" fill="#115E59" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="700">6. Export</text>
+  <text x="992" y="140" fill="#1F2933" font-family="Segoe UI, Arial, sans-serif" font-size="14">GUI preview</text>
+  <text x="992" y="160" fill="#1F2933" font-family="Segoe UI, Arial, sans-serif" font-size="14">markdown + json</text>
+  <text x="992" y="180" fill="#1F2933" font-family="Segoe UI, Arial, sans-serif" font-size="14">filter report</text>
+
+  <path d="M198 129H232" stroke="#0F766E" stroke-width="4" stroke-linecap="round"/>
+  <path d="M382 129H416" stroke="#0F766E" stroke-width="4" stroke-linecap="round"/>
+  <path d="M566 129H600" stroke="#0F766E" stroke-width="4" stroke-linecap="round"/>
+  <path d="M750 129H784" stroke="#0F766E" stroke-width="4" stroke-linecap="round"/>
+  <path d="M934 129H968" stroke="#0F766E" stroke-width="4" stroke-linecap="round"/>
+
+  <path d="M223 118L232 129L223 140" stroke="#0F766E" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M407 118L416 129L407 140" stroke="#0F766E" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M591 118L600 129L591 140" stroke="#0F766E" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M775 118L784 129L775 140" stroke="#0F766E" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M959 118L968 129L959 140" stroke="#0F766E" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
