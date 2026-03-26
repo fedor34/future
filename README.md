@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <strong>Pet project</strong> about forecasting how a concrete newsroom might cover a scheduled event.
+  <strong>Pet project</strong> про прогнозирование того, как конкретное медиа оформит заранее известный инфоповод.
 </p>
 
 <p align="center">
@@ -15,150 +15,156 @@
   <img src="https://img.shields.io/badge/status-pet%20project-C97B63?style=flat-square" alt="Pet project">
 </p>
 
-Future News Forecaster does not try to "predict the future" in a general sense.  
-It starts from **scheduled, high-certainty events** and builds a conservative forecast of how a chosen outlet could turn that event into a **headline + lead**.
+`Future News Forecaster` не пытается "предсказать будущее вообще".  
+Его задача уже и честнее: взять **запланированное событие**, оценить **подходит ли оно выбранному изданию**, и построить аккуратный прогноз того, каким может быть **headline + lead**.
 
-The current product is strongest on **calendar-driven macro and statistics coverage** and is intentionally honest about where it does not fit.
+Сейчас проект лучше всего работает на **календарных макроэкономических и статистических релизах** и не скрывает своих ограничений.
 
-## Why This Exists
+## Что это за проект
 
-This repository is a small newsroom-flavored experiment around three ideas:
+Это небольшой newsroom-oriented pet project про три вещи:
 
-- a news forecast should start from a real upcoming event, not from free-form guessing
-- outlet fit matters as much as writing style
-- a good system should be allowed to say "this outlet probably would not cover this"
+- прогноз новости должен начинаться с реального ожидаемого события, а не с фантазии модели
+- для качества важен не только стиль текста, но и вопрос: стало бы это медиа вообще писать на эту тему
+- система должна уметь честно вернуть `0 кандидатов`, если событие не проходит по редакционному fit
 
-That is why the project has an explicit `editorial fit` layer before generation and can return zero candidates as a valid outcome.
+Поэтому в проекте есть отдельный этап `editorial fit`, который фильтрует темы до генерации текста.
 
-## What It Does
+## Что умеет
 
-- collects upcoming events from connected release calendars
-- scores event predictability and outlet relevance
-- retrieves style anchors from a local archive when available
-- generates restrained scenarios first, then writes headline + lead
-- reranks results and exports them to JSON/Markdown
-- shows the forecast, warnings, and filtering logic directly in a desktop GUI
+- собирать события из подключенных календарей релизов
+- оценивать предсказуемость события и его релевантность конкретному изданию
+- искать style anchors в локальном архиве, если он есть
+- сначала строить осторожные сценарии, а потом писать headline + lead
+- ранжировать результаты и экспортировать их в JSON / Markdown
+- показывать прогноз, лог и причины фильтрации прямо в desktop GUI
 
-## Workflow
+## Как работает pipeline
 
 <p align="center">
   <img src="docs/assets/workflow.svg" alt="Workflow diagram" width="100%">
 </p>
 
-## Current Event Universe
+Логика простая:
 
-Right now the live inputs are intentionally narrow:
+`collect -> fit -> retrieve -> scenario -> draft -> export`
+
+То есть сначала проект ищет ожидаемое событие, потом проверяет подходит ли оно выбранному СМИ, и только после этого начинает писать текст.
+
+## Источники событий сейчас
+
+Пока live-слой событий у проекта узкий и это осознанное ограничение:
 
 - [ONS release calendar](https://www.ons.gov.uk/releasecalendar?page=4&release-type=type-upcoming)
 - [U.S. Census economic indicators calendar](https://www.census.gov/economic-indicators/calendar-listview.html)
-- a bundled sample fallback collector for stable offline demos
+- встроенный sample fallback для стабильных offline-демо
 
-This means the project currently works best on:
+Из-за этого проект сейчас лучше всего подходит для таких сценариев:
 
-- Reuters / Bloomberg / Financial Times style use cases
-- macro releases, trade, surveys, official statistics
-- scheduled, explainable, high-certainty newsroom events
+- Reuters / Bloomberg / Financial Times / деловые агентства
+- макрорелизы, торговая статистика, опросы, официальные публикации
+- предсказуемые newsroom-сюжеты с известной датой выхода
 
-## Honest Limitations
+## Ограничения
 
-This repo is not trying to fake universality. Current limitations are part of the product definition:
+Этот репозиторий не пытается выглядеть "универсальным ИИ для любых новостей". Ограничения здесь часть продуктовой логики:
 
-- the live event universe is mostly UK/US macro and statistical releases
-- web search improves context, but it does not replace the upstream event universe
-- not every outlet writes about these calendars, so some runs should end with zero candidates
-- outlet style matching is much stronger when a local archive like `data/archives/<outlet>_sample.jsonl` exists
-- breaking news, local city coverage, lifestyle, culture, and sports-heavy newsrooms are weak fits today
+- live-источники событий сейчас в основном UK/US и в основном про макроэкономику и статистику
+- web search помогает уточнять контекст, но не заменяет собой полноценную базу событий
+- не каждое медиа пишет по таким календарям, поэтому для части изданий нормальный итог это `0 кандидатов`
+- стиль издания определяется лучше, если есть локальный архив вроде `data/archives/<outlet>_sample.jsonl`
+- breaking news, городская повестка, lifestyle, культура и спорт сейчас покрываются слабо
 
-For selective outlets such as Meduza, routine UK releases are often filtered out. That is expected behavior, not a bug.
+Для selective-изданий вроде `Медузы` рутинные британские релизы часто будут отсеяны. Это не баг, а ожидаемое поведение.
 
-## Example Fits
+## Какие кейсы подходят лучше всего
 
-Examples the current product can realistically support:
+Реалистичные fit-сценарии для текущей версии:
 
 - Reuters / Bloomberg / Financial Times: `U.S. International Trade in Goods and Services`
 - Reuters: `Economic activity and social change in the UK, real-time indicators`
 - Reuters: `Business insights and impact on the UK economy`
-- Meduza: broader economic or geopolitical angles are more realistic than routine ONS statistics
+- Meduza: скорее темы с более широким экономическим или геополитическим углом, чем обычная ONS-статистика
 
 ## Desktop App
 
-The repo includes a Tkinter desktop app with:
+В проекте есть Tkinter-приложение с:
 
-- API key entry and `.env` saving
-- provider / date / outlet / limit controls
-- in-app forecast view
-- an `Editorial filter` tab explaining why topics were rejected
-- a project-idea tab with concept notes and product limitations
+- вводом и сохранением OpenAI API key в `.env`
+- выбором провайдера, даты, издания и числа прогнозов
+- выводом прогноза прямо в окне
+- вкладкой `Отбор тем`, где видно почему темы были отсеяны
+- вкладкой с идеей проекта и ограничениями
 
-## Quick Start
+## Быстрый старт
 
-Install:
+Установка:
 
 ```bash
 python -m pip install -e .
 ```
 
-Run the GUI:
+Запуск GUI:
 
 ```bash
 python -m future_news_forecaster gui
 ```
 
-Offline demo:
+Offline-демо:
 
 ```bash
 python -m future_news_forecaster run --date 2026-04-02 --offline --provider mock --out-dir results/offline-demo
 ```
 
-Live run with auto provider:
+Live-запуск с auto provider:
 
 ```bash
 python -m future_news_forecaster run --date 2026-04-02 --provider auto --out-dir results/live-run
 ```
 
-Force OpenAI:
+Принудительный OpenAI-режим:
 
 ```bash
 set OPENAI_API_KEY=your_key_here
 python -m future_news_forecaster run --date 2026-04-02 --provider openai --model gpt-5-mini
 ```
 
-Disable OpenAI web search:
+Отключить веб-поиск OpenAI:
 
 ```bash
 python -m future_news_forecaster run --date 2026-04-02 --provider openai --no-web-search
 ```
 
-## OpenAI Key
+## Куда вводить OpenAI key
 
-Two ways to provide the key:
+Есть два варианта:
 
-1. via the GUI field and `Save key`
-2. manually in the project root `.env`
+1. через поле в GUI и кнопку `Сохранить ключ`
+2. вручную в `.env` в корне проекта
 
 ```bash
 OPENAI_API_KEY=your_key_here
 ```
 
-## Output Artifacts
+## Что сохраняется после запуска
 
-Each run writes:
+Каждый run пишет:
 
 - `collected_events.json`
 - `forecast_run.json`
 - `forecast_run.md`
 - `editorial_filter.md`
 
-## Project Layout
+## Структура проекта
 
 ```text
 src/future_news_forecaster/
-  collectors/         calendar collectors
-  generation.py       mock + OpenAI generation
-  retrieval.py        archive retrieval
-  scoring.py          predictability + editorial fit scoring
-  pipeline.py         end-to-end orchestration
-  gui.py              desktop app
+  collectors/         collectors календарей
+  generation.py       mock + OpenAI генерация
+  retrieval.py        поиск style anchors в архиве
+  scoring.py          scoring и editorial fit
+  pipeline.py         orchestration всего пайплайна
+  gui.py              desktop GUI
   cli.py              CLI entrypoint
 data/archives/
   reuters_sample.jsonl
@@ -170,23 +176,22 @@ docs/assets/
   workflow.svg
 ```
 
-## Tech Notes
+## Технические заметки
 
-- `mock` mode gives deterministic local runs for demos and tests
-- OpenAI mode uses Structured Outputs through the Responses API
-- optional OpenAI web search is used to verify phrasing and event context
-- `provider=auto` falls back to `mock` if OpenAI is unavailable
+- `mock` режим дает детерминированные локальные прогоны для тестов и демо
+- OpenAI-режим использует Structured Outputs через Responses API
+- web search в OpenAI используется как дополнительный контекст, а не как замена event layer
+- `provider=auto` откатывается в `mock`, если OpenAI недоступен
 
 ## Roadmap
 
-- add more event calendars beyond ONS and Census
-- expand outlet-specific local archives
-- improve outlet coverage modeling, not just outlet style
-- add richer retrieval over larger article sets
-- make the GUI more newsroom-like and demo-friendly
+- добавить больше календарей событий помимо ONS и Census
+- расширить архивы под разные издания
+- улучшить не только стиль, но и coverage-модель: стало бы издание вообще писать об этом
+- добавить более сильный retrieval по большим наборам материалов
+- сделать GUI еще ближе к newsroom/demo-tool формату
 
-## Related Docs
+## Дополнительные материалы
 
-- concept notes: [`docs/project-concept/README.md`](docs/project-concept/README.md)
-- operating principles: [`docs/project-concept/principles.md`](docs/project-concept/principles.md)
-
+- описание идеи: [`docs/project-concept/README.md`](docs/project-concept/README.md)
+- принцип работы: [`docs/project-concept/principles.md`](docs/project-concept/principles.md)
